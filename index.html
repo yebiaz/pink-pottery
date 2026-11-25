@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pink Pottery · Silent Donation for Breast Cancer Patients</title>
+  <meta name="description" content="Bid on student-made ceramics from Pink Week. Every yuan goes to patients at the Breast Cancer Ward of Kunshan No. 1 Hospital.">
+  <meta name="theme-color" content="#f7c9d9">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6c-9 0-14 7-14 14 0 6 4 12 8 18L14 58l9 2 9-16 9 16 9-2-12-20c4-6 8-12 8-18 0-7-5-14-14-14zm0 8c4 0 6 3 6 6 0 3-3 8-6 12-3-4-6-9-6-12 0-3 2-6 6-6z' fill='%23e8578d'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="bg-ribbon" viewBox="0 0 400 500" aria-hidden="true"><path d="M60 480 C 120 360, 330 300, 300 160 C 280 60, 150 40, 120 120 C 90 200, 230 300, 390 330" /></svg>
+
+  <header class="site-header">
+    <a class="brand" href="#ribbons">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6c-9 0-14 7-14 14 0 6 4 12 8 18L14 58l9 2 9-16 9 16 9-2-12-20c4-6 8-12 8-18 0-7-5-14-14-14zm0 8c4 0 6 3 6 6 0 3-3 8-6 12-3-4-6-9-6-12 0-3 2-6 6-6z"/></svg>
+      <span>Pink Pottery</span>
+    </a>
+    <span class="hosts">Medic Mindset × Ceramics Club</span>
+  </header>
+
+  <section class="hero">
+    <h1 class="display">Pottery Showcase &amp; Silent Donation</h1>
+    <p class="display sub">Supporting local Breast Cancer Patients</p>
+
+    <div class="hero-panels">
+      <div class="panel countdown-panel">
+        <div class="panel-label" id="countdown-label">Bidding closes Sunday at midnight</div>
+        <div class="countdown" id="countdown" aria-live="polite">
+          <div><b id="cd-d">–</b><span>days</span></div>
+          <div><b id="cd-h">–</b><span>hrs</span></div>
+          <div><b id="cd-m">–</b><span>min</span></div>
+          <div><b id="cd-s">–</b><span>sec</span></div>
+        </div>
+      </div>
+      <div class="panel raised-panel">
+        <div class="panel-label">Pledged so far</div>
+        <div class="raised" id="raised">¥0</div>
+        <div class="raised-sub" id="raised-sub">across 0 pieces</div>
+      </div>
+    </div>
+    <div class="booth" id="booth"></div>
+    <p class="cause-blurb">Every piece here was handmade by students during <b>Pink Week</b>. Bid on your favourite, and <b>every yuan goes directly to patients at the Breast Cancer Ward of Kunshan No.&nbsp;1 Hospital</b>. <a href="#about">More about the cause →</a></p>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <a role="tab" href="#ribbons" data-tab="ribbons">Ribbons <small id="count-ribbons"></small></a>
+    <a role="tab" href="#pieces"  data-tab="pieces">Larger pieces <small id="count-pieces"></small></a>
+    <a role="tab" href="#mybids"  data-tab="mybids">My bids <small id="count-mybids"></small></a>
+    <a role="tab" href="#about"   data-tab="about">The cause</a>
+    <a role="tab" href="#how"     data-tab="how">How it works</a>
+  </nav>
+
+  <div class="notice demo" id="demo-banner" hidden>
+    <b>Demo mode.</b> The database isn't connected yet, so bids are only saved in this browser. Add your Supabase keys to <code>config.js</code> to go live.
+  </div>
+  <div class="notice closed" id="closed-banner" hidden>
+    <b>Bidding has closed.</b> Thank you! Winners will be emailed at their Duke address on Monday morning with payment and pick-up details.
+  </div>
+
+  <main>
+    <!-- grids -->
+    <section class="tab-panel" id="panel-ribbons" data-panel="ribbons">
+      <div class="panel-intro">
+        <h2>Pink ribbons</h2>
+        <p>Little clay ribbon magnets, each one shaped and glazed by a different student during Pink Week. Find one you love and leave a bid.</p>
+      </div>
+      <div class="toolbar">
+        <input type="search" placeholder="Ribbon number…" data-search="ribbons" aria-label="Search ribbons">
+        <select data-sort="ribbons" aria-label="Sort ribbons">
+          <option value="number">By number</option>
+          <option value="low">Lowest bid first</option>
+          <option value="high">Highest bid first</option>
+          <option value="nobids">No bids yet</option>
+        </select>
+      </div>
+      <div class="grid grid-small" id="grid-ribbons"></div>
+    </section>
+
+    <section class="tab-panel" id="panel-pieces" data-panel="pieces">
+      <div class="panel-intro">
+        <h2>Larger pieces</h2>
+        <p>Cups, bowls, vases and little creatures, all thrown or hand-built by students. Tap a piece to see more photos. The order is shuffled for every visitor so every piece gets seen. Families like the mugs stay together.</p>
+      </div>
+      <div class="toolbar">
+        <input type="search" placeholder="Piece number, or mugs / vases…" data-search="pieces" aria-label="Search pieces">
+        <select data-sort="pieces" aria-label="Sort pieces">
+          <option value="shuffle">Shuffled</option>
+          <option value="low">Lowest bid first</option>
+          <option value="high">Highest bid first</option>
+          <option value="nobids">No bids yet</option>
+          <option value="number">By number</option>
+        </select>
+      </div>
+      <div class="grid grid-large" id="grid-pieces"></div>
+    </section>
+
+    <section class="tab-panel" id="panel-mybids" data-panel="mybids">
+      <div class="panel-intro">
+        <h2>My bids</h2>
+        <p>Pieces you've bid on from this device. You'll also get an email update each evening at your Duke address.</p>
+      </div>
+      <div class="grid grid-large" id="grid-mybids"></div>
+      <p class="empty" id="mybids-empty">You haven't bid on anything from this device yet.</p>
+    </section>
+
+    <section class="tab-panel prose" id="panel-about" data-panel="about">
+      <div class="about-grid">
+        <article class="card-info feature">
+          <h2>Where your money goes</h2>
+          <p>Every yuan raised goes directly to patients in the <b>Breast Cancer Ward at Kunshan No. 1 Hospital</b> (昆山市第一人民医院), right here in our own city.</p>
+          <p>Treatment for breast cancer is long, and the cost of medication, travel and time away from work adds up fast for families. Your bid is a small, local way to help patients and families at our hospital.</p>
+        </article>
+        <article class="card-info">
+          <h3>Pink Week</h3>
+          <p>This showcase is the finale of <b>Breast Cancer Awareness Week</b>. On Day 4, <i>Pink Pottery</i>, students came to the Performance Cafe to make their own pink pottery and clay ribbons. Many chose to donate what they made so it could raise money for patients.</p>
+        </article>
+        <article class="card-info">
+          <h3>Medic Mindset</h3>
+          <p><b>The Medic Mindset</b> is a student-led organization for students interested in medicine and health. Through events like Pink Week, we try to bring health awareness out of the classroom and turn it into something our campus can do together.</p>
+        </article>
+        <article class="card-info">
+          <h3>Ceramics Club</h3>
+          <p>The <b>Ceramics Club</b> taught every Pink Pottery session, worked with the Kunshan studio, and fired and glazed every piece on this page. Thank you for sharing your clay, kilns and patience!</p>
+        </article>
+        <article class="card-info">
+          <h3>Early detection matters</h3>
+          <p>Get to know what's normal for your body, and talk to a doctor if you notice a new lump, a change in shape or skin, or nipple changes. Encourage the women in your life to keep up with screenings.</p>
+        </article>
+      </div>
+      <figure class="flyer">
+        <button type="button" class="flyer-btn" id="flyer-open" aria-label="View the flyer full size">
+          <img src="images/flyer.png" alt="Event flyer: Pottery Showcase and Silent Donation, 10 AM to 7 PM, Nov 25, 27 and 29 at the Performance Cafe" loading="lazy">
+        </button>
+        <figcaption>Tap the flyer to see it full size</figcaption>
+      </figure>
+    </section>
+
+    <section class="tab-panel prose" id="panel-how" data-panel="how">
+      <div class="about-grid">
+        <article class="card-info feature">
+          <h2>How the silent donation works</h2>
+          <ol class="steps">
+            <li><b>Pick a piece.</b> Browse the ribbons and larger pieces. Each card shows the current top bid.</li>
+            <li><b>Bid with your NetID.</b> Enter your NetID and an amount higher than the current top bid. Whole yuan only.</li>
+            <li><b>Get outbid? Bid again.</b> Each evening we email <code>netid@duke.edu</code> with where your bids stand.</li>
+            <li><b>Bidding closes Sunday Nov 29 at midnight</b> (China time). Bids placed online and at the booth count the same.</li>
+            <li><b>Monday morning</b>, every winner gets an email with how to pay and when to pick up their piece.</li>
+          </ol>
+        </article>
+        <article class="card-info">
+          <h3>Fine print</h3>
+          <ul>
+            <li>A bid is a pledge to donate that amount if you win, so please only bid what you're happy to give.</li>
+            <li>Only the first two letters of your NetID are shown publicly (e.g. <code>ab•••</code>).</li>
+            <li>Bids under someone else's NetID will be removed. If a winner doesn't pay, the piece goes to the next-highest bidder.</li>
+            <li>Every piece is handmade by a student, so small wobbles and glaze drips are part of the charm.</li>
+          </ul>
+        </article>
+        <article class="card-info">
+          <h3>Visit the booth</h3>
+          <p id="booth-2"></p>
+          <p>Come see the pieces in person. Photos don't do the glazes justice!</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Made with love by <b>Medic Mindset</b> &amp; the <b>Ceramics Club</b> for Pink Week.</p>
+    <p id="contact"></p>
+  </footer>
+
+  <!-- Piece detail + bid dialog -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="m-title">
+      <button class="modal-x" data-close aria-label="Close">×</button>
+      <div class="slideshow" id="m-slides">
+        <div class="slides-track" id="m-track"></div>
+        <button class="slide-nav prev" id="m-prev" aria-label="Previous photo">‹</button>
+        <button class="slide-nav next" id="m-next" aria-label="Next photo">›</button>
+        <div class="dots" id="m-dots"></div>
+      </div>
+      <div class="modal-body">
+        <div class="m-id" id="m-id"></div>
+        <h2 id="m-title"></h2>
+        <p class="m-desc" id="m-desc"></p>
+        <p class="m-fact" id="m-fact"></p>
+        <div class="m-top">
+          <div><span>Current top bid</span><b id="m-top">–</b></div>
+          <div><span>Bids</span><b id="m-count">0</b></div>
+        </div>
+        <div class="m-status" id="m-status" hidden></div>
+
+        <form id="bid-form" novalidate>
+          <label>Your NetID
+            <div class="netid-wrap"><input name="netid" autocomplete="username" maxlength="30" required placeholder="ab123" autocapitalize="none" spellcheck="false"><span>@duke.edu</span></div>
+          </label>
+          <label>Your bid (¥ RMB)
+            <div class="amount-wrap">
+              <div class="amount-row"><span>¥</span><input name="amount" type="number" inputmode="numeric" min="1" step="1" required></div>
+              <div class="quick" id="m-quick"></div>
+            </div>
+          </label>
+          <label class="check"><input type="checkbox" name="agree" required> If I win, I'll pay this amount as a donation and pick up my piece.</label>
+          <div class="form-error" id="m-error" role="alert"></div>
+          <button class="btn-primary" type="submit" id="m-submit">Place bid</button>
+        </form>
+
+        <details class="history">
+          <summary>Bid history</summary>
+          <ol id="m-history"></ol>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="modal-x" id="lightbox-x" aria-label="Close">×</button>
+    <img src="images/flyer.png" alt="Event flyer, full size">
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,388 @@
+{
+ "_howto": "Pieces are shown as 'Ribbon N' / 'Piece N'. Optional fields: name, funFact, group (pieces with the same group stay together when shuffled, e.g. 'mugs', 'frogs', 'cats'), startingBid. First image = cover; more images = slideshow. Never change an id once people have bid on it.",
+ "ribbons": [
+  {
+   "id": "R01",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R01-1.jpg"
+   ]
+  },
+  {
+   "id": "R02",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R02-1.jpg"
+   ]
+  },
+  {
+   "id": "R03",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R03-1.jpg"
+   ]
+  },
+  {
+   "id": "R04",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R04-1.jpg"
+   ]
+  },
+  {
+   "id": "R05",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R05-1.jpg"
+   ]
+  },
+  {
+   "id": "R06",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R06-1.jpg"
+   ]
+  },
+  {
+   "id": "R07",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R07-1.jpg"
+   ]
+  },
+  {
+   "id": "R08",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R08-1.jpg"
+   ]
+  },
+  {
+   "id": "R09",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R09-1.jpg"
+   ]
+  },
+  {
+   "id": "R10",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R10-1.jpg"
+   ]
+  },
+  {
+   "id": "R11",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R11-1.jpg"
+   ]
+  },
+  {
+   "id": "R12",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R12-1.jpg"
+   ]
+  },
+  {
+   "id": "R13",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R13-1.jpg"
+   ]
+  },
+  {
+   "id": "R14",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R14-1.jpg"
+   ]
+  },
+  {
+   "id": "R15",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R15-1.jpg"
+   ]
+  },
+  {
+   "id": "R16",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R16-1.jpg"
+   ]
+  },
+  {
+   "id": "R17",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R17-1.jpg"
+   ]
+  },
+  {
+   "id": "R18",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R18-1.jpg"
+   ]
+  },
+  {
+   "id": "R19",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R19-1.jpg"
+   ]
+  },
+  {
+   "id": "R20",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R20-1.jpg"
+   ]
+  },
+  {
+   "id": "R21",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R21-1.jpg"
+   ]
+  },
+  {
+   "id": "R22",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R22-1.jpg"
+   ]
+  },
+  {
+   "id": "R23",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R23-1.jpg"
+   ]
+  },
+  {
+   "id": "R24",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R24-1.jpg"
+   ]
+  },
+  {
+   "id": "R25",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R25-1.jpg"
+   ]
+  },
+  {
+   "id": "R26",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R26-1.jpg"
+   ]
+  },
+  {
+   "id": "R27",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R27-1.jpg"
+   ]
+  },
+  {
+   "id": "R28",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R28-1.jpg"
+   ]
+  },
+  {
+   "id": "R29",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R29-1.jpg"
+   ]
+  },
+  {
+   "id": "R30",
+   "startingBid": 0,
+   "images": [
+    "images/ribbons/R30-1.jpg"
+   ]
+  }
+ ],
+ "pieces": [
+  {
+   "id": "P01",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P01-1.jpg"
+   ],
+   "group": "vases",
+   "funFact": "Made with Moon River glaze."
+  },
+  {
+   "id": "P02",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P02-1.jpg",
+    "images/pieces/P02-2.jpg"
+   ],
+   "group": "vases",
+   "funFact": "Made with Moon River glaze."
+  },
+  {
+   "id": "P03",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P03-2.jpg",
+    "images/pieces/P03-1.jpg"
+   ]
+  },
+  {
+   "id": "P04",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P04-1.jpg",
+    "images/pieces/P04-2.jpg"
+   ]
+  },
+  {
+   "id": "P05",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P05-1.jpg",
+    "images/pieces/P05-2.jpg"
+   ],
+   "group": "mugs"
+  },
+  {
+   "id": "P06",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P06-1.jpg",
+    "images/pieces/P06-2.jpg"
+   ],
+   "funFact": "Painted with the same glaze as the frog (Piece 13). They look completely different!",
+   "sameGlaze": "P13"
+  },
+  {
+   "id": "P07",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P07-1.jpg",
+    "images/pieces/P07-2.jpg"
+   ],
+   "group": "mugs"
+  },
+  {
+   "id": "P08",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P08-1.jpg",
+    "images/pieces/P08-2.jpg"
+   ],
+   "funFact": "Hand-etched drawings!"
+  },
+  {
+   "id": "P09",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P09-1.jpg",
+    "images/pieces/P09-2.jpg"
+   ],
+   "group": "mugs"
+  },
+  {
+   "id": "P10",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P10-1.jpg",
+    "images/pieces/P10-2.jpg"
+   ]
+  },
+  {
+   "id": "P11",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P11-1.jpg"
+   ]
+  },
+  {
+   "id": "P12",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P12-2.jpg",
+    "images/pieces/P12-1.jpg"
+   ]
+  },
+  {
+   "id": "P13",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P13-1.jpg"
+   ],
+   "group": "frogs",
+   "funFact": "Painted with the same glaze as the DKU cup (Piece 6). They look completely different!",
+   "sameGlaze": "P06"
+  },
+  {
+   "id": "P14",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P14-1.jpg"
+   ],
+   "group": "frogs"
+  },
+  {
+   "id": "P15",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P15-1.jpg"
+   ],
+   "group": "cats"
+  },
+  {
+   "id": "P16",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P16-1.jpg",
+    "images/pieces/P16-2.jpg"
+   ]
+  },
+  {
+   "id": "P17",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P17-1.jpg"
+   ]
+  },
+  {
+   "id": "P18",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P18-1.jpg",
+    "images/pieces/P18-2.jpg",
+    "images/pieces/P18-3.jpg"
+   ],
+   "group": "mugs"
+  },
+  {
+   "id": "P19",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P19-1.jpg"
+   ],
+   "group": "mugs"
+  },
+  {
+   "id": "P20",
+   "startingBid": 0,
+   "images": [
+    "images/pieces/P20-1.jpg"
+   ],
+   "group": "mugs"
+  }
+ ]
+}
