@@ -1,1 +1,62 @@
+name: Bid emails
 
+on:
+  schedule:
+    # GitHub cron is in UTC. China time = UTC+8. (GitHub can run these up to ~30 min late.)
+    - cron: "0 14 25-29 11 *"   # 22:00 China time, Wed Nov 25 – Sun Nov 29: nightly bid update
+    - cron: "0 1 30 11 *"       # 09:00 China time, Mon Nov 30: winner emails
+  workflow_dispatch:            # lets you run it by hand from the Actions tab
+    inputs:
+      mode:
+        description: "digest = bid update, winners = final results"
+        type: choice
+        options: [digest, winners]
+        default: digest
+      test_to:
+        description: "TEST: send every email ONLY to this address (leave blank to send for real)"
+        type: string
+        default: ""
+      dry_run:
+        description: "Dry run (print emails in the log, send nothing)"
+        type: boolean
+        default: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Send emails
+        env:
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SMTP_HOST:            ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:            ${{ secrets.SMTP_PORT }}
+          SMTP_USER:            ${{ secrets.SMTP_USER }}
+          SMTP_PASS:            ${{ secrets.SMTP_PASS }}
+          FROM_NAME:            ${{ vars.FROM_NAME }}
+          SITE_URL:             ${{ vars.SITE_URL }}
+          ORGANIZER_EMAIL:      ${{ vars.ORGANIZER_EMAIL }}
+          PAYMENT_INFO:         ${{ vars.PAYMENT_INFO }}
+          PICKUP_INFO:          ${{ vars.PICKUP_INFO }}
+          TEST_TO:              ${{ inputs.test_to }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            MODE="${{ inputs.mode }}"
+            [ "${{ inputs.dry_run }}" = "true" ] && FLAGS="--dry-run"
+          elif [ "${{ github.event.schedule }}" = "0 1 30 11 *" ]; then
+            MODE=winners
+          else
+            MODE=digest
+          fi
+          echo "Mode: $MODE $FLAGS"
+          python scripts/send_emails.py "$MODE" $FLAGS
+      - name: Keep winners.csv
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: winners-csv
+          path: winners.csv
+          if-no-files-found: ignore
