@@ -107,6 +107,8 @@ class Mailer:
     def send(self, to, subject, html_body, text_body, attachment=None, inline=None):
         test_to = env("TEST_TO")
         if test_to:  # test mode: everything goes to one inbox, nobody else gets anything
+            if self.sent >= 5:
+                print(f"  (test mode: skipping more emails after 5; would go to {to})"); return
             subject = f"[TEST, would go to {to}] {subject}"
             to = test_to
         if self.dry:
@@ -263,8 +265,20 @@ def winners(bids, pieces, dry):
     print(f"Winners: {len(by_person)} people, {0 if dry else m.sent} emails sent.")
 
 
+SAMPLE_BIDS = [  # made-up bids: "cd456" has been outbid on two pieces
+    {"piece_id": "P13", "netid": "cd456", "amount": 25, "source": "web", "created_at": "2026-11-26T01:00:00Z"},
+    {"piece_id": "P13", "netid": "ab123", "amount": 40, "source": "web", "created_at": "2026-11-26T02:00:00Z"},
+    {"piece_id": "R05", "netid": "cd456", "amount": 10, "source": "web", "created_at": "2026-11-26T01:00:00Z"},
+    {"piece_id": "R05", "netid": "ab123", "amount": 12, "source": "web", "created_at": "2026-11-26T02:00:00Z"},
+]
+
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "digest"
     dry = "--dry-run" in sys.argv
+    if mode == "sample":  # example evening email from made-up bids; never touches real bidders
+        if not env("TEST_TO"):
+            sys.exit("Sample mode needs a test address (TEST_TO).")
+        digest(SAMPLE_BIDS, load_pieces(), dry)
+        sys.exit(0)
     pieces, bids = load_pieces(), load_bids()
     {"digest": digest, "winners": winners}[mode](bids, pieces, dry)

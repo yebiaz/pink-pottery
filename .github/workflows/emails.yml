@@ -8,9 +8,9 @@ on:
   workflow_dispatch:            # lets you run it by hand from the Actions tab
     inputs:
       mode:
-        description: "digest = bid update, winners = final results"
+        description: "digest = evening update, winners = Monday results, sample = example email from made-up bids (needs a test address)"
         type: choice
-        options: [digest, winners]
+        options: [digest, winners, sample]
         default: digest
       test_to:
         description: "TEST: send every email ONLY to this address (leave blank to send for real)"

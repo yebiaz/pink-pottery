@@ -29,6 +29,7 @@
   let stats = {};          // piece_id -> { top, count, history: [] }
   let shuffleOrder = {};   // piece_id -> random rank (per visit)
   let myBids = store.get("pp_mybids", {}); // piece_id -> my highest amount
+  let undos = store.get("pp_undo", {});      // piece_id -> { id, token, at, amount, prev } for the last bid placed here
   let current = null;      // piece open in modal
   let slideIdx = 0;
 
@@ -60,9 +61,10 @@
         const bids = store.get("pp_demo_bids", []);
         const top = Math.max(0, ...bids.filter(b => b.piece_id === pieceId).map(b => b.amount));
         if (top && amount <= top) throw new Error(`Someone has already bid ${yuan(top)} — your bid must be at least ${yuan(top + 1)}.`);
-        bids.push({ piece_id: pieceId, amount, netid_masked: netid.slice(0, 2) + "•".repeat(Math.max(netid.length - 2, 1)), created_at: new Date().toISOString() });
+        const id = Date.now(), undo_token = String(Math.random());
+        bids.push({ id, undo_token, piece_id: pieceId, amount, netid_masked: netid.slice(0, 2) + "•".repeat(Math.max(netid.length - 2, 1)), created_at: new Date().toISOString() });
         store.set("pp_demo_bids", bids);
-        return { ok: true };
+        return { ok: true, id, undo_token };
       }
       const r = await fetch(CFG.supabaseUrl.replace(/\/$/, "") + "/rest/v1/rpc/place_bid", {
         method: "POST", headers: this.headers(),
@@ -70,6 +72,18 @@
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(body.message || "Something went wrong — please try again.");
+      return body;
+    },
+    async undoBid(id, token) {
+      if (!LIVE) {
+        store.set("pp_demo_bids", store.get("pp_demo_bids", []).filter(b => !(b.id === id && b.undo_token === token)));
+        return { ok: true };
+      }
+      const r = await fetch(CFG.supabaseUrl.replace(/\/$/, "") + "/rest/v1/rpc/undo_bid", {
+        method: "POST", headers: this.headers(), body: JSON.stringify({ p_id: id, p_token: token })
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.message || "Couldn't undo the bid — please try again.");
       return body;
     }
   };
@@ -253,6 +267,7 @@
   function minBid(p) { const s = stats[p.id]; return s ? s.top + 1 : Math.max(1, p.startingBid || 0); }
 
   function renderModalBidInfo(resetAmount) {
+    renderUndo();
     const p = current; if (!p) return;
     const s = stats[p.id];
     $("#m-top").textContent = s ? yuan(s.top) : "No bids yet";
@@ -303,8 +318,12 @@
 
     btn.disabled = true; btn.textContent = "Placing bid…";
     try {
-      await api.placeBid(current.id, netid, amount);
+      const res = await api.placeBid(current.id, netid, amount);
       store.set("pp_me", { netid, agree: true });
+      if (res && res.id && res.undo_token) {
+        undos[current.id] = { id: res.id, token: res.undo_token, at: Date.now(), amount, prev: myBids[current.id] || 0 };
+        store.set("pp_undo", undos);
+      }
       myBids[current.id] = Math.max(myBids[current.id] || 0, amount);
       store.set("pp_mybids", myBids);
       toast(`Bid placed: ${yuan(amount)} on ${title(current)}. Thank you! 💗`);
@@ -321,6 +340,7 @@
 
   // ---------- countdown ----------
   function tick() {
+    if (current) renderUndo();
     const ms = DEADLINE.getTime() - Date.now();
     if (ms <= 0) {
       ["d", "h", "m", "s"].forEach(k => $("#cd-" + k).textContent = "0");
@@ -333,6 +353,39 @@
     $("#cd-h").textContent = String(Math.floor(s / 3600) % 24).padStart(2, "0");
     $("#cd-m").textContent = String(Math.floor(s / 60) % 60).padStart(2, "0");
     $("#cd-s").textContent = String(s % 60).padStart(2, "0");
+  }
+
+  // ---------- undo (5 minutes, only from the browser that placed the bid) ----------
+  const UNDO_MS = 5 * 60 * 1000;
+  function undoLeft(pid) {
+    const u = undos[pid];
+    return u ? Math.max(0, UNDO_MS - (Date.now() - u.at)) : 0;
+  }
+  function renderUndo() {
+    const box = $("#m-undo"); if (!box) return;
+    const left = current && !isClosed() ? undoLeft(current.id) : 0;
+    if (!left) { box.hidden = true; return; }
+    const u = undos[current.id], s = Math.ceil(left / 1000);
+    box.hidden = false;
+    box.querySelector(".undo-btn").textContent = `Undo my ${yuan(u.amount)} bid`;
+    box.querySelector(".undo-time").textContent = `Made a mistake? You can undo for ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")} more.`;
+  }
+  async function doUndo() {
+    const pid = current && current.id, u = pid && undos[pid];
+    if (!u) return;
+    const btn = $("#m-undo .undo-btn"); btn.disabled = true;
+    try {
+      await api.undoBid(u.id, u.token);
+      if (u.prev) myBids[pid] = u.prev; else delete myBids[pid];
+      store.set("pp_mybids", myBids);
+      toast(`Your ${yuan(u.amount)} bid was undone.`);
+    } catch (ex) {
+      toast(ex.message);
+    } finally {
+      delete undos[pid]; store.set("pp_undo", undos);
+      btn.disabled = false;
+      await refresh(); renderModalBidInfo(true); renderUndo();
+    }
   }
 
   let toastTimer;
@@ -382,6 +435,7 @@
     });
     $("#m-prev").onclick = () => goSlide(slideIdx - 1);
     $("#m-next").onclick = () => goSlide(slideIdx + 1);
+    $("#m-undo .undo-btn").onclick = doUndo;
     document.addEventListener("keydown", e => {
       if ($("#modal").hidden) return;
       if (e.key === "Escape") closeModal();

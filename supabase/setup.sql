@@ -14,6 +14,8 @@ create table if not exists public.bids (
 );
 create index if not exists bids_piece_amount_idx on public.bids (piece_id, amount desc);
 create index if not exists bids_netid_idx on public.bids (netid);
+-- secret token given only to the browser that placed the bid, so only it can undo the bid
+alter table public.bids add column if not exists undo_token uuid not null default gen_random_uuid();
 
 -- Lock the raw table: the public can't read NetIDs or write directly.
 alter table public.bids enable row level security;
@@ -50,6 +52,8 @@ declare
   v_netid text := split_part(lower(trim(coalesce(p_netid, ''))), '@', 1);
   v_top   integer;
   v_recent integer;
+  v_id bigint;
+  v_token uuid;
 begin
   if now() >= v_deadline then
     raise exception 'Bidding has closed — thank you for supporting the cause!';
@@ -79,13 +83,42 @@ begin
     raise exception 'Someone has already bid ¥% on this piece — your bid must be at least ¥%.', v_top, v_top + 1;
   end if;
 
-  insert into bids (piece_id, netid, amount) values (p_piece_id, v_netid, p_amount);
-  return json_build_object('ok', true, 'piece_id', p_piece_id, 'amount', p_amount);
+  insert into bids (piece_id, netid, amount) values (p_piece_id, v_netid, p_amount)
+  returning id, undo_token into v_id, v_token;
+  return json_build_object('ok', true, 'piece_id', p_piece_id, 'amount', p_amount, 'id', v_id, 'undo_token', v_token);
 end;
 $$;
 
 revoke all on function public.place_bid(text, text, integer) from public;
 grant execute on function public.place_bid(text, text, integer) to anon, authenticated;
+
+-- Undo a mistaken bid: only within 5 minutes, only before the deadline,
+-- and only with the secret token that was returned to the bidder's own browser.
+create or replace function public.undo_bid(p_id bigint, p_token uuid)
+returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_deadline constant timestamptz := '2026-11-30 00:00:00+08';
+  v_n integer;
+begin
+  if now() >= v_deadline then
+    raise exception 'Bidding has closed, so bids can no longer be undone.';
+  end if;
+  update bids set void = true
+   where id = p_id and undo_token = p_token and not void
+     and created_at > now() - interval '5 minutes';
+  get diagnostics v_n = row_count;
+  if v_n = 0 then
+    raise exception 'This bid cannot be undone anymore (more than 5 minutes have passed, or it was already undone). Please message the organizers.';
+  end if;
+  return json_build_object('ok', true);
+end;
+$$;
+revoke all on function public.undo_bid(bigint, uuid) from public;
+grant execute on function public.undo_bid(bigint, uuid) to anon, authenticated;
 
 -- Handy for organizers (only visible in the Supabase dashboard, not to the public):
 drop view if exists public.winners;
