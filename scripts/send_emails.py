@@ -85,6 +85,28 @@ def table(rows):
     return f'<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:15px">{tr}</table>'
 
 
+LINK_NAME = "Pink Pottery Auction & Fundraiser"
+
+
+def email_style():
+    """simple (default): plain-looking email with a named link; plain: text only; fancy: pink design."""
+    st = env("EMAIL_STYLE").lower()
+    if env("PLAIN_TEXT").lower() in ("true", "yes", "1"): st = "plain"
+    return st if st in ("simple", "plain", "fancy") else "simple"
+
+
+def simple_html(text, inline=None):
+    """Turn the plain-text email into a light HTML email: same words, the site link shown by name."""
+    site = env("SITE_URL")
+    body = html.escape(text)
+    if site:
+        body = body.replace(html.escape(site), f'<a href="{html.escape(site)}" style="color:#b02a60;font-weight:bold">{html.escape(LINK_NAME)}</a>')
+    if inline:
+        body = body.replace(html.escape("[QR]"), '<br><img src="cid:hospitalqr" alt="Hospital donation QR code" width="220"><br>')
+    body = body.replace("\n", "<br>\n")
+    return f'<div style="font-family:Georgia,serif;font-size:15px;line-height:1.55;color:#1d1418">{body}</div>'
+
+
 class Mailer:
     def __init__(self, dry):
         self.dry, self.sent, self.smtp = dry, 0, None
@@ -119,11 +141,11 @@ class Mailer:
         msg["To"] = to
         msg["Subject"] = subject
         msg.set_content(text_body)
-        plain = env("PLAIN_TEXT").lower() in ("true", "yes", "1")
-        if not plain:
-            msg.add_alternative(html_body, subtype="html")
-        else:
+        style = email_style()
+        if style == "plain":
             inline = None  # plain text can't show an inline image
+        else:
+            msg.add_alternative(html_body if style == "fancy" else simple_html(text_body, inline), subtype="html")
         if inline:  # (path, cid): image shown inside the email body
             path, cid = inline
             ext = Path(path).suffix.lstrip(".").lower().replace("jpg", "jpeg")
@@ -252,7 +274,7 @@ def winners(bids, pieces, dry):
                      "<p>Much appreciation,<br><b>Medic Mindset and DKU Ceramics Club</b></p>")
             text = (f"Dear {netid},\n\nWe want to let you know that you did not place the final bid for the {names} ceramic{'s' if len(lost) > 1 else ''}. "
                     "Thank you for your participation, and we hope you enjoyed the auction!\n\n" +
-                    ("If you'd still like to donate, the hospital's QR code is in this email.\n\n" if qr else "") +
+                    ("Some event participants told us they would like to donate even if they did not place the top bid, so we're including the hospital's QR code below:\n[QR]\n\n" if qr else "") +
                     f"The hospital representative sends her appreciation to you: “{HOSPITAL_QUOTE}”\n\n"
                     "Any donation goes directly to the hospital's breast cancer ward. To our knowledge, there are about 75 patients on the ward that we visited, "
                     "including women, men, young adults and elders.\n\n"

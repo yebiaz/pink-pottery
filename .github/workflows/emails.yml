@@ -16,10 +16,11 @@ on:
         description: "TEST: send every email ONLY to this address (leave blank to send for real)"
         type: string
         default: ""
-      plain_text:
-        description: "Plain text only (no colors/buttons), to test spam filtering"
-        type: boolean
-        default: false
+      style:
+        description: "simple = plain-looking with a named link (default), plain = text only, fancy = pink design"
+        type: choice
+        options: [simple, plain, fancy]
+        default: simple
       dry_run:
         description: "Dry run (print emails in the log, send nothing)"
         type: boolean
@@ -49,7 +50,7 @@ jobs:
           PAYMENT_INFO:         ${{ vars.PAYMENT_INFO }}
           PICKUP_INFO:          ${{ vars.PICKUP_INFO }}
           TEST_TO:              ${{ inputs.test_to }}
-          PLAIN_TEXT:           ${{ inputs.plain_text || vars.PLAIN_TEXT }}
+          EMAIL_STYLE:          ${{ inputs.style || vars.EMAIL_STYLE || 'simple' }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"
