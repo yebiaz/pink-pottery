@@ -16,6 +16,10 @@ on:
         description: "TEST: send every email ONLY to this address (leave blank to send for real)"
         type: string
         default: ""
+      plain_text:
+        description: "Plain text only (no colors/buttons), to test spam filtering"
+        type: boolean
+        default: false
       dry_run:
         description: "Dry run (print emails in the log, send nothing)"
         type: boolean
@@ -23,6 +27,9 @@ on:
 
 jobs:
   send:
+    # Scheduled (real) sends only happen when the repo variable SENDING_ON is set to yes.
+    # Manual test runs always work.
+    if: github.event_name != 'schedule' || vars.SENDING_ON == 'yes'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,6 +49,7 @@ jobs:
           PAYMENT_INFO:         ${{ vars.PAYMENT_INFO }}
           PICKUP_INFO:          ${{ vars.PICKUP_INFO }}
           TEST_TO:              ${{ inputs.test_to }}
+          PLAIN_TEXT:           ${{ inputs.plain_text || vars.PLAIN_TEXT }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"

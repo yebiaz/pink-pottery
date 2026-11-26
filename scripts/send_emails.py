@@ -119,7 +119,11 @@ class Mailer:
         msg["To"] = to
         msg["Subject"] = subject
         msg.set_content(text_body)
-        msg.add_alternative(html_body, subtype="html")
+        plain = env("PLAIN_TEXT").lower() in ("true", "yes", "1")
+        if not plain:
+            msg.add_alternative(html_body, subtype="html")
+        else:
+            inline = None  # plain text can't show an inline image
         if inline:  # (path, cid): image shown inside the email body
             path, cid = inline
             ext = Path(path).suffix.lstrip(".").lower().replace("jpg", "jpeg")
@@ -154,7 +158,7 @@ def and_list(xs):
 
 
 def digest(bids, pieces, dry):
-    """Evening update: only people who have been outbid on at least one piece."""
+    """Evening update: ONE email per bidder, covering pieces they're winning and pieces they've been outbid on."""
     now = datetime.now(CST)
     if now >= DEADLINE and "--force" not in sys.argv and not env("TEST_TO"):
         print("Bidding has closed; skipping digest."); return
@@ -163,25 +167,37 @@ def digest(bids, pieces, dry):
     for b in bids:
         mine[b["netid"]][b["piece_id"]] = max(b["amount"], mine[b["netid"]].get(b["piece_id"], 0))
     left = time_left(now)
-    sent_to = 0
+    is_are = "is" if left.startswith(("1 ", "less")) else "are"
+    n_out = n_win = 0
     with Mailer(dry) as m:
         for netid, items in sorted(mine.items()):
             lost = sorted(pid for pid in items if top[pid]["netid"] != netid)
-            if not lost: continue
-            names = [title(pieces, pid) for pid in lost]
-            rows = [(title(pieces, pid), f'top bid now <b style="color:#b02a60">¥{top[pid]["amount"]}</b> <span style="color:#7a6870">(yours: ¥{items[pid]})</span>') for pid in lost]
-            inner = (f"<p>Dear {html.escape(netid)},</p>"
-                     f"<p>You have been outbid for the <b>{html.escape(and_list(names))}</b> ceramic{'s' if len(lost) > 1 else ''}.</p>{table(rows)}"
-                     f"<p>There {'is' if left.startswith(('1 ', 'less')) else 'are'} <b>{left}</b> left before bidding closes "
-                     "(Sunday, Nov 29 at midnight)! You can raise your bid any time on the website.</p>"
+            won = sorted(pid for pid in items if top[pid]["netid"] == netid)
+            n_out += bool(lost); n_win += bool(won and not lost)
+            parts_h, parts_t = [], []
+            if lost:
+                names = and_list([title(pieces, pid) for pid in lost])
+                rows = [(title(pieces, pid), f'top bid now <b style="color:#b02a60">¥{top[pid]["amount"]}</b> <span style="color:#7a6870">(yours: ¥{items[pid]})</span>') for pid in lost]
+                parts_h.append(f"<p>You have been outbid for the <b>{html.escape(names)}</b> ceramic{'s' if len(lost) > 1 else ''}.</p>{table(rows)}")
+                parts_t.append(f"You have been outbid for the {names} ceramic{'s' if len(lost) > 1 else ''}.\n" +
+                               "".join(f"- {title(pieces, pid)}: top bid now ¥{top[pid]['amount']} (yours: ¥{items[pid]})\n" for pid in lost))
+            if won:
+                names = and_list([title(pieces, pid) for pid in won])
+                rows = [(title(pieces, pid), f'your bid <b style="color:#2f8f5b">¥{items[pid]}</b> is the top bid') for pid in won]
+                parts_h.append(f"<p>You are currently the top bidder for the <b>{html.escape(names)}</b> ceramic{'s' if len(won) > 1 else ''}.</p>{table(rows)}")
+                parts_t.append(f"You are currently the top bidder for the {names} ceramic{'s' if len(won) > 1 else ''}.\n" +
+                               "".join(f"- {title(pieces, pid)}: your bid ¥{items[pid]} is the top bid\n" for pid in won))
+            inner = (f"<p>Dear {html.escape(netid)},</p>" + "".join(parts_h) +
+                     f"<p>There {is_are} <b>{left}</b> left before bidding closes (Sunday, Nov 29 at midnight)! "
+                     "You can check or raise your bids any time on the website.</p>"
                      "<p>Thank you for your time and have a great day!</p>" + SIGNOFF_HTML)
-            text = (f"Dear {netid},\n\nYou have been outbid for the {and_list(names)} ceramic{'s' if len(lost) > 1 else ''}.\n" +
-                    "".join(f"- {title(pieces, pid)}: top bid now ¥{top[pid]['amount']} (yours: ¥{items[pid]})\n" for pid in lost) +
-                    f"\nThere is {left} left before bidding closes (Sunday, Nov 29 at midnight)! {env('SITE_URL')}\n\n"
+            text = (f"Dear {netid},\n\n" + "\n".join(parts_t) +
+                    f"\nThere {is_are} {left} left before bidding closes (Sunday, Nov 29 at midnight)! "
+                    f"You can raise your bid any time on the website: {env('SITE_URL')}\n\n"
                     "Thank you for your time and have a great day!\n\nMany thanks and have fun,\nDKU Ceramics Club and Medic Mindset\n")
-            m.send(f"{netid}@duke.edu", f"You've been outbid on {and_list(names)}", wrap("You've been outbid", inner), text)
-            sent_to += 1
-    print(f"Evening update: {sent_to} outbid bidders, {0 if dry else m.sent} emails sent.")
+            subject = "Pink Pottery: you've been outbid" if lost else "Pink Pottery: you're the top bidder"
+            m.send(f"{netid}@duke.edu", subject, wrap("Your evening bid update", inner), text)
+    print(f"Evening update: {len(mine)} bidders ({n_out} outbid on something, {n_win} winning everything), {0 if dry else m.sent} emails sent.")
 
 
 def winners(bids, pieces, dry):
@@ -265,11 +281,12 @@ def winners(bids, pieces, dry):
     print(f"Winners: {len(by_person)} people, {0 if dry else m.sent} emails sent.")
 
 
-SAMPLE_BIDS = [  # made-up bids: "cd456" has been outbid on two pieces
+SAMPLE_BIDS = [  # made-up bids: "cd456" is outbid on two pieces and winning one; "ab123" is winning two
     {"piece_id": "P13", "netid": "cd456", "amount": 25, "source": "web", "created_at": "2026-11-26T01:00:00Z"},
     {"piece_id": "P13", "netid": "ab123", "amount": 40, "source": "web", "created_at": "2026-11-26T02:00:00Z"},
     {"piece_id": "R05", "netid": "cd456", "amount": 10, "source": "web", "created_at": "2026-11-26T01:00:00Z"},
     {"piece_id": "R05", "netid": "ab123", "amount": 12, "source": "web", "created_at": "2026-11-26T02:00:00Z"},
+    {"piece_id": "P05", "netid": "cd456", "amount": 30, "source": "web", "created_at": "2026-11-26T03:00:00Z"},
 ]
 
 if __name__ == "__main__":
