@@ -193,7 +193,7 @@ def digest(bids, pieces, dry):
                      "<p>Thank you for your time and have a great day!</p>" + SIGNOFF_HTML)
             text = (f"Dear {netid},\n\n" + "\n".join(parts_t) +
                     f"\nThere {is_are} {left} left before bidding closes (Sunday, Nov 29 at midnight)! "
-                    f"You can raise your bid any time on the website: {env('SITE_URL')}\n\n"
+                    f"You can check or raise your bids any time on the website: {env('SITE_URL')}\n\n"
                     "Thank you for your time and have a great day!\n\nMany thanks and have fun,\nDKU Ceramics Club and Medic Mindset\n")
             subject = "Pink Pottery: you've been outbid" if lost else "Pink Pottery: you're the top bidder"
             m.send(f"{netid}@duke.edu", subject, wrap("Your evening bid update", inner), text)
