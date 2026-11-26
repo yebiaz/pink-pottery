@@ -5,6 +5,7 @@ on:
     # GitHub cron is in UTC. China time = UTC+8. (GitHub can run these up to ~30 min late.)
     # Off the top of the hour: GitHub delays or drops many runs scheduled at :00.
     - cron: "47 13 27-28 11 *"  # 21:47 China time Fri Nov 27 + Sat Nov 28 (usually arrives ~22:00): evening update
+    - cron: "41 7 29 11 *"      # 15:41 China time Sun Nov 29 (usually ~16:00, 3 hours before close): last evening-style update
     - cron: "41 0 30 11 *"      # 08:41 China time Mon Nov 30 (usually ~09:00): winner emails
   workflow_dispatch:            # lets you run it by hand from the Actions tab
     inputs:
