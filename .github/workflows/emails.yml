@@ -3,8 +3,9 @@ name: Bid emails
 on:
   schedule:
     # GitHub cron is in UTC. China time = UTC+8. (GitHub can run these up to ~30 min late.)
-    - cron: "0 14 25-29 11 *"   # 22:00 China time, Wed Nov 25 – Sun Nov 29: nightly bid update
-    - cron: "0 1 30 11 *"       # 09:00 China time, Mon Nov 30: winner emails
+    # Off the top of the hour: GitHub delays or drops many runs scheduled at :00.
+    - cron: "47 13 27-28 11 *"  # 21:47 China time Fri Nov 27 + Sat Nov 28 (usually arrives ~22:00): evening update
+    - cron: "41 0 30 11 *"      # 08:41 China time Mon Nov 30 (usually ~09:00): winner emails
   workflow_dispatch:            # lets you run it by hand from the Actions tab
     inputs:
       mode:
@@ -55,7 +56,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             MODE="${{ inputs.mode }}"
             [ "${{ inputs.dry_run }}" = "true" ] && FLAGS="--dry-run"
-          elif [ "${{ github.event.schedule }}" = "0 1 30 11 *" ]; then
+          elif [ "${{ github.event.schedule }}" = "41 0 30 11 *" ]; then
             MODE=winners
           else
             MODE=digest
