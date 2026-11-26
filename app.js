@@ -13,7 +13,7 @@
     CFG.supabaseAnonKey = String(CFG.supabaseAnonKey || "").trim();
   })();
   const LIVE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
-  const DEADLINE = new Date(CFG.deadline || "2026-11-30T00:00:00+08:00");
+  const DEADLINE = new Date(CFG.deadline || "2026-11-29T19:00:00+08:00");
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 
@@ -29,6 +29,7 @@
   let stats = {};          // piece_id -> { top, count, history: [] }
   let shuffleOrder = {};   // piece_id -> random rank (per visit)
   let myBids = store.get("pp_mybids", {}); // piece_id -> my highest amount
+  let pendings = store.get("pp_pending", {}); // piece_id -> { amount, netid } waiting for email confirmation
   let undos = store.get("pp_undo", {});      // piece_id -> { id, token, at, amount, prev } for the last bid placed here
   let current = null;      // piece open in modal
   let slideIdx = 0;
@@ -72,6 +73,28 @@
       });
       const body = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(body.message || "Something went wrong — please try again.");
+      return body;
+    },
+    // First-time bidders: Supabase emails netid@duke.edu a link back to this page.
+    async sendVerifyEmail(netid) {
+      if (!LIVE) return { ok: true };
+      const back = location.origin + location.pathname;
+      const r = await fetch(CFG.supabaseUrl + "/auth/v1/otp?redirect_to=" + encodeURIComponent(back), {
+        method: "POST", headers: this.headers(), body: JSON.stringify({ email: netid + "@duke.edu", create_user: true })
+      });
+      if (r.status === 429) return { ok: true, already: true };  // a link was sent very recently
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({}));
+        throw new Error(body.msg || body.message || body.error_description || "Couldn't send the confirmation email.");
+      }
+      return { ok: true };
+    },
+    async confirmNetid(accessToken) {
+      const r = await fetch(CFG.supabaseUrl + "/rest/v1/rpc/confirm_netid", {
+        method: "POST", headers: { ...this.headers(), Authorization: "Bearer " + accessToken }, body: "{}"
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(body.message || "Couldn't confirm your NetID — please try the link again.");
       return body;
     },
     async undoBid(id, token) {
@@ -280,10 +303,12 @@
     $("#m-quick").innerHTML = steps.map(d => `<button type="button" data-v="${min + d}">${yuan(min + d)}</button>`).join("");
     f.amount.placeholder = "at least " + min;
 
-    const st = myStatus(p.id), box = $("#m-status");
-    box.hidden = !st;
-    box.className = "m-status " + (st || "");
-    box.textContent = st === "win" ? `You're the top bidder at ${yuan(myBids[p.id])} 🎉` : st === "lose" ? `You've been outbid. Your last bid was ${yuan(myBids[p.id])}.` : "";
+    const st = myStatus(p.id), box = $("#m-status"), pend = pendings[p.id];
+    box.hidden = !st && !pend;
+    box.className = "m-status " + (pend ? "pending" : st || "");
+    box.textContent = pend
+      ? `One last step: we emailed ${pend.netid}@duke.edu a link (check Junk too!). Your ${yuan(pend.amount)} bid counts once you click it. You only need to do this once.`
+      : st === "win" ? `You're the top bidder at ${yuan(myBids[p.id])} 🎉` : st === "lose" ? `You've been outbid. Your last bid was ${yuan(myBids[p.id])}.` : "";
 
     $("#m-history").innerHTML = s ? s.history.map(b =>
       `<li><span>${esc(b.netid_masked)}</span><span>${new Date(b.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><b>${yuan(b.amount)}</b></li>`).join("")
@@ -324,9 +349,19 @@
         undos[current.id] = { id: res.id, token: res.undo_token, at: Date.now(), amount, prev: myBids[current.id] || 0 };
         store.set("pp_undo", undos);
       }
-      myBids[current.id] = Math.max(myBids[current.id] || 0, amount);
-      store.set("pp_mybids", myBids);
-      toast(`Bid placed: ${yuan(amount)} on ${title(current)}. Thank you! 💗`);
+      if (res && res.pending) {
+        pendings[current.id] = { amount, netid: res.netid || netid };
+        store.set("pp_pending", pendings);
+        let note = "";
+        try { const v = await api.sendVerifyEmail(res.netid || netid); if (v.already) note = " (we sent one a moment ago)"; }
+        catch (mailErr) { note = ` (${mailErr.message} Please try again in a minute.)`; }
+        toast(`Almost done! Check ${netid}@duke.edu, including Junk, for our link${note}.`);
+      } else {
+        delete pendings[current.id]; store.set("pp_pending", pendings);
+        myBids[current.id] = Math.max(myBids[current.id] || 0, amount);
+        store.set("pp_mybids", myBids);
+        toast(`Bid placed: ${yuan(amount)} on ${title(current)}. Thank you! 💗`);
+      }
       await refresh();
       renderModalBidInfo(true);
     } catch (ex) {
@@ -395,6 +430,32 @@
   }
 
   // ---------- boot ----------
+  // Coming back from the confirmation email: the link puts a login token in the address.
+  async function handleEmailLink() {
+    const h = location.hash.replace(/^#/, "");
+    if (!/(^|&)(access_token|error)=/.test(h)) return;
+    const q = new URLSearchParams(h);
+    history.replaceState(null, "", location.pathname + "#ribbons");
+    const banner = $("#verify-banner");
+    const show = (html, ok) => { banner.innerHTML = html; banner.className = "notice " + (ok ? "verified" : "closed"); banner.hidden = false; setTimeout(() => banner.scrollIntoView({ behavior: "smooth", block: "center" }), 300); };
+    if (q.get("error")) return show("<b>That link didn't work</b> (it may have expired). Place your bid again and we'll send a fresh one.", false);
+    try {
+      const r = await api.confirmNetid(q.get("access_token"));
+      const live = r.live || [], lost = r.outbid || [];
+      live.forEach(b => { myBids[b.piece_id] = Math.max(myBids[b.piece_id] || 0, b.amount); delete pendings[b.piece_id]; });
+      lost.forEach(b => delete pendings[b.piece_id]);
+      store.set("pp_mybids", myBids); store.set("pp_pending", pendings); store.set("pp_me", { ...store.get("pp_me", {}), netid: r.netid, agree: true });
+      const name = id => esc(byId[id] ? title(byId[id]) : id);
+      let html = `<b>Thanks, ${esc(r.netid)}, you're confirmed!</b> Future bids go through right away.`;
+      if (live.length) html += ` Your bid${live.length > 1 ? "s are" : " is"} now live: ${live.map(b => `${name(b.piece_id)} (${yuan(b.amount)})`).join(", ")}.`;
+      if (lost.length) html += ` While you were confirming, someone outbid you on ${lost.map(b => `${name(b.piece_id)} (now ${yuan(b.top)})`).join(", ")}, so please bid again there.`;
+      html += " Tip: mark our emails as <b>Not Junk</b> so you get your bid updates.";
+      show(html, true);
+    } catch (ex) {
+      show(`<b>We couldn't confirm your NetID.</b> ${esc(ex.message)}`, false);
+    }
+  }
+
   async function init() {
     $("#demo-banner").hidden = LIVE;
     const parts = String(CFG.boothText || "").split("·").map(x => x.trim()).filter(Boolean);
@@ -445,9 +506,13 @@
     $("#m-slides").addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
     $("#m-slides").addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) goSlide(slideIdx + (dx < 0 ? 1 : -1)); x0 = null; });
     $("#bid-form").addEventListener("submit", submitBid);
-    window.addEventListener("hashchange", () => { if (!location.hash.startsWith("#piece-")) closeModal(); showTab(); });
+    window.addEventListener("hashchange", async () => {
+      if (/(access_token|error)=/.test(location.hash)) { await handleEmailLink(); renderAll(); }
+      if (!location.hash.startsWith("#piece-")) closeModal(); showTab();
+    });
     document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh({ animate: true }); });
 
+    await handleEmailLink();
     renderAll();
     showTab();
     tick(); setInterval(tick, 1000);

@@ -26,7 +26,7 @@
 
     <div class="hero-panels">
       <div class="panel countdown-panel">
-        <div class="panel-label" id="countdown-label">Bidding closes Sunday at midnight</div>
+        <div class="panel-label" id="countdown-label">Bidding closes Sunday at 7 PM</div>
         <div class="countdown" id="countdown" aria-live="polite">
           <div><b id="cd-d">–</b><span>days</span></div>
           <div><b id="cd-h">–</b><span>hrs</span></div>
@@ -55,6 +55,7 @@
   <div class="notice demo" id="demo-banner" hidden>
     <b>Demo mode.</b> The database isn't connected yet, so bids are only saved in this browser. Add your Supabase keys to <code>config.js</code> to go live.
   </div>
+  <div class="notice verified" id="verify-banner" role="status" hidden></div>
   <div class="notice closed" id="closed-banner" hidden>
     <b>Bidding has closed.</b> Thank you! Winners will be emailed at their Duke address on Monday morning with payment and pick-up details.
   </div>
@@ -144,8 +145,9 @@
           <ol class="steps">
             <li><b>Pick a piece.</b> Browse the ribbons and larger pieces. Each card shows the current top bid.</li>
             <li><b>Bid with your NetID.</b> Enter your NetID and an amount higher than the current top bid. Whole yuan only.</li>
+            <li><b>First bid? Confirm it's you.</b> We email a link to <code>netid@duke.edu</code> from ceramicsclubdku@gmail.com. It may land in <b>Junk</b>. Click it and your bid goes live. You only do this once.</li>
             <li><b>Get outbid? Bid again.</b> Each evening we email <code>netid@duke.edu</code> with where your bids stand.</li>
-            <li><b>Bidding closes Sunday Nov 29 at midnight</b> (China time). Bids placed online and at the booth count the same.</li>
+            <li><b>Bidding closes Sunday Nov 29 at 7 PM</b> (China time). Bids placed online and at the booth count the same.</li>
             <li><b>Monday morning</b>, every winner gets an email with how to pay and when to pick up their piece.</li>
           </ol>
         </article>

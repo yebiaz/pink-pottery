@@ -11,7 +11,7 @@ window.AUCTION_CONFIG = {
   supabaseAnonKey: "sb_publishable_rc6P1KZDZweCwSdjMmB3Cg_AH1IjGb9",
 
   // Must match v_deadline in supabase/setup.sql
-  deadline: "2026-11-30T00:00:00+08:00", // Sunday Nov 29, midnight (China time)
+  deadline: "2026-11-29T19:00:00+08:00", // Sunday Nov 29, 7 PM (China time)
 
   boothText: "Outside the Performance Cafe · 10 AM – 7 PM · Wed Nov 25 · Fri Nov 27 · Sun Nov 29", // first part = place, the rest = times/days
   contactEmail: "", // e.g. "medicmindset@dukekunshan.edu.cn" — shown in the footer if set

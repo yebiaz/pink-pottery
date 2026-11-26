@@ -22,7 +22,7 @@ from email.message import EmailMessage
 from pathlib import Path
 
 CST = timezone(timedelta(hours=8))
-DEADLINE = datetime(2026, 11, 30, 0, 0, tzinfo=CST)
+DEADLINE = datetime(2026, 11, 29, 19, 0, tzinfo=CST)
 ROOT = Path(__file__).resolve().parent.parent
 env = lambda k, d="": os.environ.get(k, d).strip()
 
@@ -51,7 +51,8 @@ def load_bids():
         h["Authorization"] = f"Bearer {key}"
     req = urllib.request.Request(url, headers=h)
     with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read())
+        rows = json.loads(r.read())
+    return [b for b in rows if not b.get("pending")]  # bids waiting for email confirmation don't count yet
 
 
 def top_bids(bids):
@@ -210,11 +211,11 @@ def digest(bids, pieces, dry):
                 parts_t.append(f"You are currently the top bidder for the {names} ceramic{'s' if len(won) > 1 else ''}.\n" +
                                "".join(f"- {title(pieces, pid)}: your bid ¥{items[pid]} is the top bid\n" for pid in won))
             inner = (f"<p>Dear {html.escape(netid)},</p>" + "".join(parts_h) +
-                     f"<p>There {is_are} <b>{left}</b> left before bidding closes (Sunday, Nov 29 at midnight)! "
+                     f"<p>There {is_are} <b>{left}</b> left before bidding closes (Sunday, Nov 29 at 7 PM)! "
                      "You can check or raise your bids any time on the website.</p>"
                      "<p>Thank you for your time and have a great day!</p>" + SIGNOFF_HTML)
             text = (f"Dear {netid},\n\n" + "\n".join(parts_t) +
-                    f"\nThere {is_are} {left} left before bidding closes (Sunday, Nov 29 at midnight)! "
+                    f"\nThere {is_are} {left} left before bidding closes (Sunday, Nov 29 at 7 PM)! "
                     f"You can check or raise your bids any time on the website: {env('SITE_URL')}\n\n"
                     "Thank you for your time and have a great day!\n\nMany thanks and have fun,\nDKU Ceramics Club and Medic Mindset\n")
             subject = "Pink Pottery: you've been outbid" if lost else "Pink Pottery: you're the top bidder"

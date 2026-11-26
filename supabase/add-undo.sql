@@ -10,7 +10,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_deadline constant timestamptz := '2026-11-30 00:00:00+08';  -- Sunday Nov 29, midnight (China time)
+  v_deadline constant timestamptz := '2026-11-29 19:00:00+08';  -- Sunday Nov 29, 7 PM (China time)
   v_netid text := split_part(lower(trim(coalesce(p_netid, ''))), '@', 1);
   v_top   integer;
   v_recent integer;
@@ -63,7 +63,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_deadline constant timestamptz := '2026-11-30 00:00:00+08';
+  v_deadline constant timestamptz := '2026-11-29 19:00:00+08';
   v_n integer;
 begin
   if now() >= v_deadline then
