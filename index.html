@@ -100,10 +100,15 @@
     <section class="tab-panel" id="panel-mybids" data-panel="mybids">
       <div class="panel-intro">
         <h2>My bids</h2>
-        <p>Pieces you've bid on from this device. You'll also get an email update each evening at your Duke address.</p>
+        <p>Type your NetID to see every piece you've bid on, from any phone or laptop. You'll also get an email update each evening at your Duke address.</p>
       </div>
+      <form class="netid-lookup" id="lookup-form" novalidate>
+        <div class="netid-wrap"><input name="netid" placeholder="Your NetID, e.g. ab123" autocapitalize="none" spellcheck="false" autocomplete="username" aria-label="Your NetID"><span>@duke.edu</span></div>
+        <button type="submit" class="btn-primary">Show my bids</button>
+      </form>
+      <p class="lookup-msg" id="lookup-msg" role="status"></p>
       <div class="grid grid-large" id="grid-mybids"></div>
-      <p class="empty" id="mybids-empty">You haven't bid on anything from this device yet.</p>
+      <p class="empty" id="mybids-empty">No bids to show yet.</p>
     </section>
 
     <section class="tab-panel prose" id="panel-about" data-panel="about">

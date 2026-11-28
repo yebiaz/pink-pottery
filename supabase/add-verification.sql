@@ -186,3 +186,20 @@ from public.bids
 where not void and not pending
 order by piece_id, amount desc, created_at asc;
 revoke all on public.winners from anon, authenticated;
+
+-- 8) "My bids" by NetID
+create or replace function public.my_bids(p_netid text)
+returns table (piece_id text, amount integer, pending boolean)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select b.piece_id, max(b.amount)::integer, bool_and(b.pending)
+  from bids b
+  where b.netid = split_part(lower(trim(coalesce(p_netid, ''))), '@', 1)
+    and not b.void
+  group by b.piece_id
+$$;
+revoke all on function public.my_bids(text) from public;
+grant execute on function public.my_bids(text) to anon, authenticated;

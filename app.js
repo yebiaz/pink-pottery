@@ -97,6 +97,15 @@
       if (!r.ok) throw new Error(body.message || "Couldn't confirm your NetID — please try the link again.");
       return body;
     },
+    async myBids(netid) {  // null = feature not set up in the database yet
+      if (!LIVE) return null;
+      const r = await fetch(CFG.supabaseUrl + "/rest/v1/rpc/my_bids", {
+        method: "POST", headers: this.headers(), body: JSON.stringify({ p_netid: netid })
+      });
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error("Couldn't look up your bids — please try again.");
+      return r.json();
+    },
     async undoBid(id, token) {
       if (!LIVE) {
         store.set("pp_demo_bids", store.get("pp_demo_bids", []).filter(b => !(b.id === id && b.undo_token === token)));
@@ -214,6 +223,25 @@
     list = sortList(list, mode);
     grid.innerHTML = list.map(p => cardHTML(p, kind)).join("") || `<p class="empty">Nothing matches “${esc(q)}”.</p>`;
     if (prev) list.forEach(p => { if ((prev[p.id]?.top || 0) !== (stats[p.id]?.top || 0)) grid.querySelector(`[data-id="${CSS.escape(p.id)}"] .meta`)?.classList.add("bump"); });
+  }
+
+  // Load this NetID's bids from the database, so "My bids" works on any device.
+  async function loadMyBids(netid, opts = {}) {
+    netid = String(netid || "").trim().toLowerCase().split("@")[0];
+    if (!/^[a-z0-9]{2,16}$/.test(netid)) { if (opts.loud) $("#lookup-msg").textContent = "Please enter a valid NetID, e.g. ab123."; return; }
+    let rows;
+    try { rows = await api.myBids(netid); }
+    catch (ex) { if (opts.loud) $("#lookup-msg").textContent = ex.message; return; }
+    if (rows === null) { if (opts.loud) $("#lookup-msg").textContent = "Showing bids placed from this device."; return; }
+    myBids = {}; pendings = {};
+    rows.forEach(r => { if (r.pending) pendings[r.piece_id] = { amount: r.amount, netid }; else myBids[r.piece_id] = r.amount; });
+    store.set("pp_mybids", myBids); store.set("pp_pending", pendings);
+    store.set("pp_me", { ...store.get("pp_me", {}), netid });
+    $("#lookup-form").netid.value = netid;
+    const n = Object.keys(myBids).length + Object.keys(pendings).length;
+    $("#lookup-msg").textContent = n ? `Showing ${n} piece${n > 1 ? "s" : ""} bid on by ${netid}.` : `${netid} hasn't bid on anything yet.`;
+    renderAll();
+    if (current) renderModalBidInfo(false);
   }
 
   function renderMyBids() {
@@ -363,6 +391,7 @@
         toast(`Bid placed: ${yuan(amount)} on ${title(current)}. Thank you! 💗`);
       }
       await refresh();
+      await loadMyBids(netid);
       renderModalBidInfo(true);
     } catch (ex) {
       err.textContent = ex.message;
@@ -506,6 +535,8 @@
     $("#m-slides").addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
     $("#m-slides").addEventListener("touchend", e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) goSlide(slideIdx + (dx < 0 ? 1 : -1)); x0 = null; });
     $("#bid-form").addEventListener("submit", submitBid);
+    $("#lookup-form").addEventListener("submit", e => { e.preventDefault(); loadMyBids(e.target.netid.value, { loud: true }); });
+    $("#lookup-form").netid.value = store.get("pp_me", {}).netid || "";
     window.addEventListener("hashchange", async () => {
       if (/(access_token|error)=/.test(location.hash)) { await handleEmailLink(); renderAll(); }
       if (!location.hash.startsWith("#piece-")) closeModal(); showTab();
@@ -517,6 +548,8 @@
     showTab();
     tick(); setInterval(tick, 1000);
     await refresh({ loud: true });
+    const me = store.get("pp_me", {});
+    if (me.netid) loadMyBids(me.netid);
     setInterval(() => { if (!document.hidden) refresh({ animate: true }); }, (CFG.refreshSeconds || 30) * 1000);
   }
 
