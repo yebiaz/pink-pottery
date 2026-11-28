@@ -185,8 +185,9 @@
   function cardHTML(p, kind) {
     const s = stats[p.id];
     const st = myStatus(p.id);
-    const tag = st === "win" ? `<span class="tag win">You're winning</span>`
-      : st === "lose" ? `<span class="tag lose">Outbid</span>`
+    const done = isClosed();
+    const tag = st === "win" ? `<span class="tag win">${done ? "You won! 🎉" : "You're winning"}</span>`
+      : st === "lose" ? `<span class="tag lose">${done ? "Not won" : "Outbid"}</span>`
       : !s ? `<span class="tag new">No bids yet</span>` : "";
     const nPhotos = (p.images || []).length;
     const priceLabel = s ? "Top bid" : "Starts at";
@@ -336,7 +337,8 @@
     box.className = "m-status " + (pend ? "pending" : st || "");
     box.textContent = pend
       ? `One last step: we emailed ${pend.netid}@duke.edu a link (check Junk too!). Your ${yuan(pend.amount)} bid counts once you click it. You only need to do this once.`
-      : st === "win" ? `You're the top bidder at ${yuan(myBids[p.id])} 🎉` : st === "lose" ? `You've been outbid. Your last bid was ${yuan(myBids[p.id])}.` : "";
+      : st === "win" ? (isClosed() ? `You won this piece with ${yuan(myBids[p.id])}! 🎉 Check your email for pick-up details.` : `You're the top bidder at ${yuan(myBids[p.id])} 🎉`)
+      : st === "lose" ? (isClosed() ? `Someone else won this piece. Thank you for bidding!` : `You've been outbid. Your last bid was ${yuan(myBids[p.id])}.`) : "";
 
     $("#m-history").innerHTML = s ? s.history.map(b =>
       `<li><span>${esc(b.netid_masked)}</span><span>${new Date(b.created_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span><b>${yuan(b.amount)}</b></li>`).join("")

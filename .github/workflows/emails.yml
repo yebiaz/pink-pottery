@@ -6,7 +6,7 @@ on:
     # Off the top of the hour: GitHub delays or drops many runs scheduled at :00.
     - cron: "47 13 27-28 11 *"  # 21:47 China time Fri Nov 27 + Sat Nov 28 (usually arrives ~22:00): evening update
     - cron: "41 7 29 11 *"      # 15:41 China time Sun Nov 29 (usually ~16:00, 3 hours before close): last evening-style update
-    - cron: "41 0 30 11 *"      # 08:41 China time Mon Nov 30 (usually ~09:00): winner emails
+    # Monday winner emails are sent by hand from Outlook (Gmail lands in Junk), so no automatic Monday run.
   workflow_dispatch:            # lets you run it by hand from the Actions tab
     inputs:
       mode:
